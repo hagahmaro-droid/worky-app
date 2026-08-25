@@ -1,0 +1,1393 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Worky – منصة حجز مساحات العمل المشتركة</title>
+  
+  <!-- Font Awesome, Google Fonts & Leaflet CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Readex+Pro:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-gradient: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+      --accent-gradient: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+      --accent-orange: #f59e0b;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --chip-bg: #f1f5f9;
+      --success: #10b981;
+      --danger: #ef4444;
+      --radius-lg: 20px;
+      --radius-md: 14px;
+      --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.03), 0 2px 4px -2px rgba(0, 0, 0, 0.03);
+      --shadow-lg: 0 20px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+      --glass: rgba(255, 255, 255, 0.85);
+      --map-filter: none;
+    }
+
+    body.dark-mode {
+      --bg: #090d16;
+      --card-bg: #1e293b;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: #334155;
+      --chip-bg: #334155;
+      --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+      --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+      --glass: rgba(30, 41, 59, 0.85);
+      --map-filter: brightness(0.7) invert(1) contrast(1.1) hue-rotate(200deg);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Readex Pro', 'Plus Jakarta Sans', system-ui, sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding-bottom: 60px;
+      -webkit-font-smoothing: antialiased;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    .header {
+      background: var(--glass);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      position: sticky;
+      top: 16px;
+      z-index: 1000;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 24px;
+      border-radius: 100px;
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--border);
+      margin-bottom: 28px;
+      gap: 15px;
+      transition: all 0.3s ease;
+    }
+
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--text);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+      letter-spacing: -0.5px;
+    }
+    .logo span.dot { color: var(--primary); }
+    .logo .badge {
+      font-size: 0.7rem;
+      background: #eff6ff;
+      color: var(--primary);
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-weight: 600;
+      border: 1px solid #dbeafe;
+    }
+    body.dark-mode .logo .badge {
+      background: #1e3a8a;
+      color: #93c5fd;
+      border-color: #2563eb;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 4px;
+      background: var(--chip-bg);
+      padding: 5px;
+      border-radius: 30px;
+      transition: background 0.3s ease;
+    }
+
+    .nav-btn {
+      border: none;
+      background: transparent;
+      padding: 8px 18px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.25s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-btn.active, .nav-btn:hover {
+      background: var(--card-bg);
+      color: var(--primary);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .user-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .points-tag {
+      background: #fffbeb;
+      color: #b45309;
+      border: 1px solid #fef3c7;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: 0.2s;
+    }
+    body.dark-mode .points-tag {
+      background: #451a03;
+      color: #fde047;
+      border-color: #78350f;
+    }
+    .points-tag:hover { transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+
+    .theme-toggle-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border);
+      background: var(--card-bg);
+      color: var(--text);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      transition: all 0.25s ease;
+    }
+    .theme-toggle-btn:hover {
+      transform: scale(1.05);
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .btn {
+      background: var(--primary-gradient);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 30px;
+      font-weight: 600;
+      font-size: 0.88rem;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      text-decoration: none;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+    }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35); }
+    .btn-outline {
+      background: transparent;
+      border: 1.5px solid var(--border);
+      color: var(--text);
+      box-shadow: none;
+    }
+    .btn-outline:hover { background: var(--chip-bg); border-color: var(--primary); color: var(--primary); transform: translateY(-1px); }
+    .btn-danger {
+      background: #fef2f2;
+      color: var(--danger);
+      border: 1px solid #fecaca;
+      box-shadow: none;
+    }
+    body.dark-mode .btn-danger {
+      background: #451a1a;
+      color: #fca5a5;
+      border-color: #7f1d1d;
+    }
+    .btn-danger:hover {
+      background: var(--danger);
+      color: white;
+      border-color: var(--danger);
+    }
+    .btn-sm { padding: 7px 14px; font-size: 0.8rem; border-radius: 20px; }
+
+    .page {
+      display: none;
+      animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .page.active { display: block; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #2563eb 100%);
+      color: white;
+      border-radius: 28px;
+      padding: 48px;
+      margin-bottom: 28px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--shadow-lg);
+    }
+    .hero::after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -10%;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+      border-radius: 50%;
+    }
+    .hero h1 { font-size: 2.3rem; margin-bottom: 12px; font-weight: 800; letter-spacing: -0.5px; }
+    .hero p { font-size: 1.05rem; opacity: 0.85; max-width: 620px; line-height: 1.7; margin-bottom: 24px; font-weight: 300; }
+
+    .quick-actions {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 18px;
+      margin-bottom: 28px;
+    }
+    .action-card {
+      background: var(--card-bg);
+      padding: 22px;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+    .action-card:hover { transform: translateY(-4px); border-color: var(--primary); box-shadow: var(--shadow-lg); }
+    .action-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-md);
+      background: #eff6ff;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      margin-bottom: 14px;
+    }
+    body.dark-mode .action-icon {
+      background: #1e3a8a;
+      color: #60a5fa;
+    }
+
+    .layout-grid {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 24px;
+    }
+    @media (max-width: 960px) {
+      .layout-grid { grid-template-columns: 1fr; }
+      .header { flex-wrap: wrap; border-radius: 20px; }
+      .nav-links { order: 3; width: 100%; justify-content: center; margin-top: 5px; }
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+      transition: background 0.3s ease, border-color 0.3s ease;
+    }
+
+    #homeMap, #fullMap {
+      width: 100%;
+      height: 420px;
+      border-radius: var(--radius-md);
+      z-index: 1;
+    }
+
+    .leaflet-tile-pane {
+      filter: var(--map-filter);
+    }
+
+    .filter-bar {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+      margin-bottom: 20px;
+    }
+    .chip {
+      background: var(--chip-bg);
+      padding: 8px 18px;
+      border-radius: 30px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      white-space: nowrap;
+      border: 1px solid transparent;
+      transition: all 0.2s ease;
+    }
+    .chip:hover { background: var(--border); color: var(--text); }
+    .chip.active {
+      background: var(--primary-gradient);
+      color: white;
+      box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+    }
+
+    .venue-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+    }
+    .venue-card {
+      background: var(--card-bg);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+    }
+    .venue-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-lg); border-color: var(--primary); }
+    .venue-img {
+      height: 160px;
+      background: #cbd5e1;
+      background-size: cover;
+      background-position: center;
+      position: relative;
+    }
+    .venue-status {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(4px);
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #0f172a;
+      box-shadow: var(--shadow-sm);
+    }
+    body.dark-mode .venue-status {
+      background: rgba(15, 23, 42, 0.85);
+      color: #f8fafc;
+    }
+    .venue-body {
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+      justify-content: space-between;
+    }
+    .venue-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 6px; }
+    .venue-info { font-size: 0.83rem; color: var(--text-muted); margin-bottom: 12px; }
+    .venue-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+    .tag { font-size: 0.72rem; background: var(--chip-bg); padding: 4px 10px; border-radius: 8px; color: var(--text-muted); font-weight: 500; }
+
+    .booking-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      transition: all 0.2s ease;
+    }
+    .booking-card:hover {
+      box-shadow: var(--shadow-sm);
+      border-color: var(--primary);
+    }
+    .booking-card.cancelled {
+      opacity: 0.65;
+      background: var(--chip-bg);
+    }
+    .booking-badge {
+      font-size: 0.75rem;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-weight: 700;
+      display: inline-block;
+    }
+    .booking-badge.confirmed { background: #ecfdf5; color: var(--success); }
+    body.dark-mode .booking-badge.confirmed { background: #064e3b; color: #34d399; }
+    .booking-badge.cancelled { background: #fef2f2; color: var(--danger); }
+    body.dark-mode .booking-badge.cancelled { background: #451a1a; color: #fca5a5; }
+
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    .stat-item {
+      background: var(--chip-bg);
+      padding: 14px 18px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(6px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      padding: 16px;
+    }
+    .modal.active { display: flex; }
+    .modal-content {
+      background: var(--card-bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 32px;
+      max-width: 480px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: var(--shadow-lg);
+      animation: modalUp 0.25s ease-out;
+    }
+    @keyframes modalUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .form-group { margin-bottom: 16px; text-align: right; }
+    .form-group label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text); }
+    .form-control {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1.5px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      border-radius: var(--radius-md);
+      font-size: 0.92rem;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+    .form-control:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); }
+
+    .rewards-banner {
+      background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+      border-color: #fde68a;
+    }
+    body.dark-mode .rewards-banner {
+      background: linear-gradient(135deg, #2a1a08 0%, #451a03 100%);
+      border-color: #78350f;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: #0f172a;
+      color: white;
+      padding: 12px 28px;
+      border-radius: 50px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      box-shadow: var(--shadow-lg);
+      z-index: 3000;
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      opacity: 0;
+      border: 1px solid var(--border);
+    }
+    body.dark-mode .toast {
+      background: #1e293b;
+      color: #f8fafc;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- HEADER / NAVIGATION -->
+  <header class="header">
+    <a class="logo" id="logoBtn">
+      Worky<span class="dot">.</span> <span class="badge">مصر</span>
+    </a>
+
+    <nav class="nav-links">
+      <button class="nav-btn active" data-target="home-page"><i class="fas fa-compass"></i> اكتشف</button>
+      <button class="nav-btn" data-target="venues-page"><i class="fas fa-building"></i> المساحات</button>
+      <button class="nav-btn" data-target="map-page"><i class="fas fa-map-marked-alt"></i> الخريطة</button>
+      <button class="nav-btn" data-target="bookings-page"><i class="fas fa-calendar-check"></i> حجوزاتي</button>
+      <button class="nav-btn" data-target="rewards-page"><i class="fas fa-gift"></i> المكافآت</button>
+    </nav>
+
+    <div class="user-actions">
+      <button class="theme-toggle-btn" id="themeToggleBtn" title="تبديل وضع الرؤية">
+        <i class="fas fa-moon" id="themeIcon"></i>
+      </button>
+
+      <div class="points-tag" id="pointsBtn">
+        <i class="fas fa-coins" style="color:var(--accent-orange);"></i>
+        <span id="userPointsVal">240</span> نقطة
+      </div>
+      <button class="btn btn-outline" id="loginModalBtn">
+        <i class="fas fa-user-circle"></i> <span id="userNameTxt">مروان بهاء</span>
+      </button>
+      <button class="btn btn-sm btn-outline" id="adminToggleBtn" title="لوحة الإدارة"><i class="fas fa-cog"></i></button>
+    </div>
+  </header>
+
+  <!-- PAGE 1: EXPLORE / HOME -->
+  <main id="home-page" class="page active">
+    <div class="hero">
+      <h1>احجز مساحة عملك المثالية 🚀</h1>
+      <p>اكتشف أفضل المساحات المشتركة، غرف الاجتماعات، والدراسة بالقرب منك. احجز بسهولة، وراقب موقعك عبر الـ GPS واستبدل زياراتك بمكافآت مجانية.</p>
+      <div style="display:flex; gap:12px;">
+        <button class="btn" style="background:white; color:var(--primary); box-shadow:none;" id="heroExploreBtn">تصفح المساحات الآن</button>
+        <button class="btn btn-outline" style="color:white; border-color:rgba(255,255,255,0.3);" id="heroQrBtn"><i class="fas fa-qrcode"></i> تسجيل حضور QR</button>
+      </div>
+    </div>
+
+    <div class="quick-actions">
+      <div class="action-card" id="actVenues">
+        <div class="action-icon"><i class="fas fa-search-location"></i></div>
+        <h3>استكشف المساحات</h3>
+        <p style="font-size:0.8rem; color:var(--text-muted); margin-top:6px;">تصفح أكثر من 15 مساحة عمل مجهزة بكل الخدمات.</p>
+      </div>
+      <div class="action-card" id="actMap">
+        <div class="action-icon" style="background:#f0fdf4; color:var(--success);"><i class="fas fa-map-pin"></i></div>
+        <h3>توجيه GPS مباشر</h3>
+        <p style="font-size:0.8rem; color:var(--text-muted); margin-top:6px;">اضغط على أي مكان وستتحرك الخريطة فوراً لموقعه.</p>
+      </div>
+      <div class="action-card" id="actBookings">
+        <div class="action-icon" style="background:#fffbeb; color:var(--accent-orange);"><i class="fas fa-ticket-alt"></i></div>
+        <h3>سجل الحجوزات</h3>
+        <p style="font-size:0.8rem; color:var(--text-muted); margin-top:6px;">متابعة وإلغاء وإدارة جميع حجوزاتك النشطة.</p>
+      </div>
+    </div>
+
+    <div class="layout-grid">
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <h3 style="font-size:1.1rem;"><i class="fas fa-map-marked-alt" style="color:var(--primary); margin-left:6px;"></i> الخريطة القريبة</h3>
+          <span style="font-size:0.8rem; color:var(--text-muted);">انقر على المكان للتوجه إليه</span>
+        </div>
+        <div id="homeMap"></div>
+      </div>
+
+      <div class="card">
+        <h3 style="font-size:1.1rem; margin-bottom:16px;"><i class="fas fa-fire" style="color:var(--accent-orange); margin-left:6px;"></i> المساحات الأعلى تقييماً</h3>
+        <div id="featuredVenuesList" style="display:flex; flex-direction:column; gap:12px;"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- PAGE 2: VENUES -->
+  <section id="venues-page" class="page">
+    <div class="card" style="margin-bottom:20px;">
+      <h2>جميع مساحات العمل المتاحة</h2>
+      <p style="font-size:0.88rem; color:var(--text-muted); margin:6px 0 16px;">اختر مكانك المفضل، أو قم بتوجيه الخريطة إليه أو حجزه مباشرة.</p>
+      
+      <div class="filter-bar" id="filterBar">
+        <div class="chip active" data-filter="all">الكل</div>
+        <div class="chip" data-filter="wifi"><i class="fas fa-wifi"></i> إنترنت سريع</div>
+        <div class="chip" data-filter="quiet"><i class="fas fa-volume-mute"></i> مناطق هادئة</div>
+        <div class="chip" data-filter="meeting"><i class="fas fa-users"></i> غرف اجتماعات</div>
+      </div>
+    </div>
+
+    <div class="venue-grid" id="fullVenuesGrid"></div>
+  </section>
+
+  <!-- PAGE 3: FULL MAP -->
+  <section id="map-page" class="page">
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:12px;">
+        <div>
+          <h2>توجيه الخريطة والملاحة</h2>
+          <p style="font-size:0.85rem; color:var(--text-muted); margin-top:2px;">انقر على أي علامة لمشاهدة تفاصيل المكان والحجز المباشر.</p>
+        </div>
+        <button class="btn" id="mapQrScanBtn"><i class="fas fa-qrcode"></i> تسجيل دخول سريع (QR)</button>
+      </div>
+      <div id="fullMap"></div>
+    </div>
+  </section>
+
+  <!-- PAGE 4: BOOKINGS -->
+  <section id="bookings-page" class="page">
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:12px;">
+        <div>
+          <h2>سجل الحجوزات والأنشطة</h2>
+          <p style="font-size:0.85rem; color:var(--text-muted); margin-top:2px;">استعرض كافة عمليات الحجز، التفاصيل، وإمكانية إلغاء الحجوزات النشطة.</p>
+        </div>
+        <button class="btn btn-sm" id="bookNewBtn"><i class="fas fa-plus"></i> حجز مساحة جديدة</button>
+      </div>
+
+      <div class="stats-bar">
+        <div class="stat-item">
+          <span style="font-size:0.8rem; color:var(--text-muted);">إجمالي الحجوزات</span>
+          <h3 id="statTotalBookings" style="color:var(--primary); font-size:1.4rem; margin-top:4px;">0</h3>
+        </div>
+        <div class="stat-item">
+          <span style="font-size:0.8rem; color:var(--text-muted);">الحجوزات النشطة</span>
+          <h3 id="statActiveBookings" style="color:var(--success); font-size:1.4rem; margin-top:4px;">0</h3>
+        </div>
+        <div class="stat-item">
+          <span style="font-size:0.8rem; color:var(--text-muted);">المبلغ الإجمالي</span>
+          <h3 id="statTotalSpent" style="color:var(--text); font-size:1.4rem; margin-top:4px;">0 ج.م</h3>
+        </div>
+      </div>
+
+      <div class="filter-bar" id="bookingFilterBar" style="margin-bottom:16px;">
+        <div class="chip active" data-bfilter="all">الكل</div>
+        <div class="chip" data-bfilter="مؤكد"><i class="fas fa-check-circle"></i> المؤكدة</div>
+        <div class="chip" data-bfilter="ملغي"><i class="fas fa-times-circle"></i> الملغاة</div>
+      </div>
+      
+      <div id="userBookingsList" style="display:flex; flex-direction:column; gap:12px;"></div>
+    </div>
+  </section>
+
+  <!-- PAGE 5: REWARDS -->
+  <section id="rewards-page" class="page">
+    <div class="card rewards-banner" style="margin-bottom:24px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div>
+          <h2 style="color:var(--accent-orange);"><i class="fas fa-gift" style="margin-left:6px;"></i> متجر المكافآت Worky Rewards</h2>
+          <p style="font-size:0.9rem; margin-top:4px;">اجمع النقاط عند كل حجز وتسجيل دخول واستبدالها بخصومات ومشاريب مجانية!</p>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:2.2rem; font-weight:800; color:var(--accent-orange);" id="storePointsDisplay">240</div>
+          <span style="font-size:0.8rem; font-weight:600;">رصيد النقاط</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap:20px;">
+      <div class="card" style="text-align:center;">
+        <i class="fas fa-mug-hot" style="font-size:2.5rem; color:var(--primary); margin-bottom:12px;"></i>
+        <h4>مشروب قهوة مجاني</h4>
+        <p style="font-size:0.82rem; color:var(--text-muted); margin:8px 0 16px;">كوب قهوة أو إسبرسو مجاناً من بوفيه المكان.</p>
+        <button class="btn redeem-btn" data-cost="60" style="width:100%;">استبدال بـ 60 نقطة</button>
+      </div>
+
+      <div class="card" style="text-align:center;">
+        <i class="fas fa-percentage" style="font-size:2.5rem; color:var(--success); margin-bottom:12px;"></i>
+        <h4>خصم 25% على الحجز القادم</h4>
+        <p style="font-size:0.82rem; color:var(--text-muted); margin:8px 0 16px;">خصم مباشر على إجمالي قيمة أي حجز يومي.</p>
+        <button class="btn redeem-btn" data-cost="120" style="width:100%;">استبدال بـ 120 نقطة</button>
+      </div>
+
+      <div class="card" style="text-align:center;">
+        <i class="fas fa-clock" style="font-size:2.5rem; color:var(--accent-orange); margin-bottom:12px;"></i>
+        <h4>ساعتان إضافيتان مجاناً</h4>
+        <p style="font-size:0.82rem; color:var(--text-muted); margin:8px 0 16px;">احصل على ساعتين مجانيتين في المساحة المفتوحة.</p>
+        <button class="btn redeem-btn" data-cost="180" style="width:100%;">استبدال بـ 180 نقطة</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAGE 6: ADMIN PANEL -->
+  <section id="admin-page" class="page">
+    <div class="card">
+      <h2>لوحة تحكم الإدارة – إضافة وتعديل المساحات</h2>
+      <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:20px;">إضافة مساحات عمل جديدة تظهر فوراً على الخريطة للعملاء.</p>
+
+      <form id="addVenueForm" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:16px;">
+        <div class="form-group">
+          <label>اسم المساحة</label>
+          <input type="text" class="form-control" id="admName" placeholder="مثال: سبيس المعادي" required>
+        </div>
+        <div class="form-group">
+          <label>خط العرض (Latitude)</label>
+          <input type="number" step="any" class="form-control" id="admLat" placeholder="30.0444" required>
+        </div>
+        <div class="form-group">
+          <label>خط الطول (Longitude)</label>
+          <input type="number" step="any" class="form-control" id="admLng" placeholder="31.2357" required>
+        </div>
+        <div class="form-group">
+          <label>السعر / الساعة (ج.م)</label>
+          <input type="number" class="form-control" id="admPrice" placeholder="40" required>
+        </div>
+        <div class="form-group" style="grid-column: 1 / -1; margin-bottom:0;">
+          <button type="submit" class="btn" style="width:100%;"><i class="fas fa-plus-circle"></i> نشر المساحة على الخريطة</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+</div>
+
+<!-- BOOKING MODAL (معدل لإضافة طرق الدفع) -->
+<div class="modal" id="bookingModal">
+  <div class="modal-content">
+    <h3 id="bookModalTitle">حجز مساحة عمل</h3>
+    <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:16px;" id="bookModalSub">حدد تفاصيل حجزك وطريقة الدفع للتأكيد</p>
+    
+    <form id="bookingForm">
+      <div class="form-group" id="venueSelectGroup" style="display:none;">
+        <label>اختر المساحة</label>
+        <select class="form-control" id="bookVenueSelect"></select>
+      </div>
+      <div class="form-group">
+        <label>التاريخ</label>
+        <input type="date" class="form-control" id="bookDate" required>
+      </div>
+      <div class="form-group">
+        <label>عدد الساعات</label>
+        <input type="number" min="1" max="12" value="2" class="form-control" id="bookHours" required>
+      </div>
+      <div class="form-group">
+        <label>نوع المقعد</label>
+        <select class="form-control" id="bookType">
+          <option value="shared">مكتب مشترَك (Shared Desk)</option>
+          <option value="private">مكتب خاص (Private Desk)</option>
+          <option value="meeting">غرفة اجتماعات (Meeting Room)</option>
+        </select>
+      </div>
+
+      <!-- طريقة الدفع -->
+      <div class="form-group">
+        <label><i class="fas fa-wallet" style="color:var(--primary); margin-left:4px;"></i> طريقة الدفع</label>
+        <select class="form-control" id="paymentMethod">
+          <option value="cash">💵 الدفع عند الوصول (في المكان)</option>
+          <option value="card">💳 بطاقة ائتمانية / ميزة (Visa / Mastercard)</option>
+          <option value="wallet">📱 محفظة إلكترونية (فودافون كاش / أورنج / اتصالات)</option>
+          <option value="points">🪙 استخدام نقاط Worky (استبدال النقاط)</option>
+        </select>
+      </div>
+
+      <!-- حقل المحفظة -->
+      <div class="form-group" id="walletNumberGroup" style="display:none;">
+        <label>رقم المحفظة الإلكترونية</label>
+        <input type="tel" class="form-control" id="walletPhone" placeholder="01xxxxxxxxx">
+      </div>
+
+      <!-- حقول البطاقة -->
+      <div id="cardDetailsGroup" style="display:none;">
+        <div class="form-group">
+          <label>رقم البطاقة</label>
+          <input type="text" class="form-control" id="cardNumber" placeholder="**** **** **** ****" maxlength="19">
+        </div>
+        <div style="display:flex; gap:10px;">
+          <div class="form-group" style="flex:1;">
+            <label>تاريخ الانتهاء</label>
+            <input type="text" class="form-control" id="cardExpiry" placeholder="MM/YY" maxlength="5">
+          </div>
+          <div class="form-group" style="flex:1;">
+            <label>رمز CVV</label>
+            <input type="password" class="form-control" id="cardCvv" placeholder="123" maxlength="3">
+          </div>
+        </div>
+      </div>
+
+      <div style="background:var(--chip-bg); padding:16px; border-radius:12px; margin-bottom:20px; text-align:right; border: 1px solid var(--border);">
+        <span style="font-size:0.85rem; color:var(--text-muted);">الإجمالي المتوقع:</span>
+        <strong id="bookTotalPrice" style="color:var(--primary); font-size:1.2rem; float:left;">0 ج.م</strong>
+      </div>
+
+      <div style="display:flex; gap:10px;">
+        <button type="submit" class="btn" style="flex:1;">تأكيد الحجز والدفع</button>
+        <button type="button" class="btn btn-outline" id="closeBookingBtn">إلغاء</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- QR MODAL -->
+<div class="modal" id="qrModal">
+  <div class="modal-content" style="text-align:center;">
+    <h3><i class="fas fa-qrcode" style="color:var(--primary); margin-left:6px;"></i> مسح QR الحضور</h3>
+    <p style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;">احصل على النقاط وسجل دخولك فور وصولك المكان</p>
+    
+    <div style="width:150px; height:150px; border:2px dashed var(--primary); border-radius:20px; margin:20px auto; display:flex; align-items:center; justify-content:center; background:var(--chip-bg); font-size:2.5rem; color:var(--primary);">
+      <i class="fas fa-camera"></i>
+    </div>
+
+    <div class="form-group">
+      <label>اختر المكان المتواجد فيه الآن:</label>
+      <select class="form-control" id="qrVenueSelect"></select>
+    </div>
+
+    <div style="display:flex; gap:10px; margin-top:20px;">
+      <button class="btn" id="confirmQrBtn" style="flex:1;">تأكيد الحضور (+15 نقطة)</button>
+      <button class="btn btn-outline" id="closeQrBtn">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOGIN MODAL -->
+<div class="modal" id="loginModal">
+  <div class="modal-content">
+    <h3>تسجيل الدخول / إنشاء حساب</h3>
+    <div class="form-group" style="margin-top:16px;">
+      <label>الاسم بالكامل</label>
+      <input type="text" class="form-control" id="loginNameInput" value="مروان بهاء">
+    </div>
+    <div class="form-group">
+      <label>البريد الإلكتروني</label>
+      <input type="email" class="form-control" value="marwan@example.com">
+    </div>
+    <div style="display:flex; gap:10px; margin-top:24px;">
+      <button class="btn" id="saveLoginBtn" style="flex:1;">حفظ ومتابعة</button>
+      <button class="btn btn-outline" id="closeLoginBtn">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" class="toast">تم الإجراء بنجاح</div>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+(function() {
+  "use strict";
+
+  // --- Database State ---
+  let venues = [
+    { id: 1, name: "مكتبة الإسكندرية – Co-Working", lat: 31.2001, lng: 29.9187, price: 30, amenities: ["wifi","quiet"], points: 15, img: "https://images.unsplash.com/photo-1527192491265-7e15c55b1ed2?w=500" },
+    { id: 2, name: "ذا هب وسط البلد (The Hub)", lat: 30.0444, lng: 31.2357, price: 45, amenities: ["wifi","meeting"], points: 20, img: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=500" },
+    { id: 3, name: "كوفي وورك المعادي", lat: 29.9602, lng: 31.2569, price: 35, amenities: ["wifi","quiet"], points: 10, img: "https://images.unsplash.com/photo-1517502884422-41eaead166d4?w=500" },
+    { id: 4, name: "كرياتيف سبيس التجمع", lat: 30.0074, lng: 31.4278, price: 60, amenities: ["wifi","meeting","quiet"], points: 25, img: "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=500" }
+  ];
+
+  let bookings = [
+    { id: 101, venueName: "ذا هب وسط البلد (The Hub)", date: "2026-08-25", hours: 3, seatType: "مكتب مشترَك", payMethod: "كاش", total: 135, status: "مؤكد", pointsEarned: 20, code: "WRK-8821" },
+    { id: 100, venueName: "كوفي وورك المعادي", date: "2026-08-10", hours: 2, seatType: "غرفة اجتماعات", payMethod: "محفظة إلكترونية", total: 70, status: "ملغي", pointsEarned: 0, code: "WRK-3419" }
+  ];
+
+  let userPoints = 240;
+  let selectedVenueForBooking = null;
+  let currentBookingFilter = "all";
+
+  // Leaflet Maps
+  let homeMap, fullMap;
+  let homeMarkers = {}, fullMarkers = {};
+
+  // --- Dark Mode Controller ---
+  function initTheme() {
+    const themeBtn = document.getElementById('themeToggleBtn');
+    const themeIcon = document.getElementById('themeIcon');
+    const savedTheme = localStorage.getItem('worky_theme');
+
+    if (savedTheme === 'dark') {
+      document.body.classList.add('dark-mode');
+      themeIcon.className = 'fas fa-sun';
+    }
+
+    themeBtn.addEventListener('click', () => {
+      document.body.classList.toggle('dark-mode');
+      const isDark = document.body.classList.contains('dark-mode');
+      
+      themeIcon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+      localStorage.setItem('worky_theme', isDark ? 'dark' : 'light');
+      showToast(isDark ? '🌙 تم تفعيل الوضع الداكن' : '☀️ تم تفعيل الوضع الفاتح');
+    });
+  }
+
+  // --- Toast Helper ---
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2800);
+  }
+
+  // --- Router Engine ---
+  function navigateTo(targetId) {
+    document.querySelectorAll('.nav-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.target === targetId);
+    });
+
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    const targetPage = document.getElementById(targetId);
+    if(targetPage) targetPage.classList.add('active');
+
+    if (targetId === 'home-page' && homeMap) setTimeout(() => homeMap.invalidateSize(), 200);
+    if (targetId === 'map-page') {
+      initFullMap();
+      setTimeout(() => fullMap.invalidateSize(), 200);
+    }
+  }
+
+  // Focus Map on Venue
+  function focusVenueOnMap(venue) {
+    navigateTo('map-page');
+    setTimeout(() => {
+      if(fullMap) {
+        fullMap.flyTo([venue.lat, venue.lng], 15, { animate: true, duration: 1.2 });
+        if(fullMarkers[venue.id]) fullMarkers[venue.id].openPopup();
+      }
+    }, 250);
+    showToast(`📍 جاري التوجه إلى: ${venue.name}`);
+  }
+
+  // --- Init Navigation Events ---
+  function initNavigation() {
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+      btn.addEventListener('click', () => navigateTo(btn.dataset.target));
+    });
+
+    document.getElementById('logoBtn').addEventListener('click', () => navigateTo('home-page'));
+    document.getElementById('actVenues').addEventListener('click', () => navigateTo('venues-page'));
+    document.getElementById('heroExploreBtn').addEventListener('click', () => navigateTo('venues-page'));
+    document.getElementById('actMap').addEventListener('click', () => navigateTo('map-page'));
+    document.getElementById('actBookings').addEventListener('click', () => navigateTo('bookings-page'));
+    document.getElementById('pointsBtn').addEventListener('click', () => navigateTo('rewards-page'));
+    document.getElementById('adminToggleBtn').addEventListener('click', () => navigateTo('admin-page'));
+    document.getElementById('bookNewBtn').addEventListener('click', () => openBookingModal());
+
+    // Login Modal
+    document.getElementById('loginModalBtn').addEventListener('click', () => document.getElementById('loginModal').classList.add('active'));
+    document.getElementById('closeLoginBtn').addEventListener('click', () => document.getElementById('loginModal').classList.remove('active'));
+    document.getElementById('saveLoginBtn').addEventListener('click', () => {
+      const name = document.getElementById('loginNameInput').value.trim();
+      if(name) {
+        document.getElementById('userNameTxt').textContent = name;
+        document.getElementById('loginModal').classList.remove('active');
+        showToast(`مرحباً بك، ${name}`);
+      }
+    });
+
+    // QR Actions
+    const openQr = () => {
+      const select = document.getElementById('qrVenueSelect');
+      select.innerHTML = '';
+      venues.forEach(v => {
+        select.innerHTML += `<option value="${v.id}">${v.name} (+${v.points} نقاط)</option>`;
+      });
+      document.getElementById('qrModal').classList.add('active');
+    };
+
+    document.getElementById('heroQrBtn').addEventListener('click', openQr);
+    document.getElementById('mapQrScanBtn').addEventListener('click', openQr);
+    document.getElementById('closeQrBtn').addEventListener('click', () => document.getElementById('qrModal').classList.remove('active'));
+    
+    document.getElementById('confirmQrBtn').addEventListener('click', () => {
+      const vId = parseInt(document.getElementById('qrVenueSelect').value);
+      const v = venues.find(item => item.id === vId);
+      if(v) {
+        userPoints += v.points;
+        updateState();
+        document.getElementById('qrModal').classList.remove('active');
+        showToast(`🎉 تم تسجيل الحضور في ${v.name} (+${v.points} نقطة)`);
+        focusVenueOnMap(v);
+      }
+    });
+
+    // Booking Filters Events
+    document.querySelectorAll('#bookingFilterBar .chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        document.querySelectorAll('#bookingFilterBar .chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        currentBookingFilter = chip.dataset.bfilter;
+        renderBookings();
+      });
+    });
+
+    // Redeem Buttons
+    document.querySelectorAll('.redeem-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const cost = parseInt(btn.dataset.cost);
+        if(userPoints >= cost) {
+          userPoints -= cost;
+          updateState();
+          showToast("🎁 تم استبدال المكافأة بنجاح!");
+        } else {
+          showToast("❌ رصيد النقاط غير كافٍ.");
+        }
+      });
+    });
+
+    // Form Submissions & Change Events
+    document.getElementById('bookingForm').addEventListener('submit', handleBookingSubmit);
+    document.getElementById('closeBookingBtn').addEventListener('click', closeBookingModal);
+    document.getElementById('bookHours').addEventListener('input', calculateBookingPrice);
+    document.getElementById('bookType').addEventListener('change', calculateBookingPrice);
+    document.getElementById('bookVenueSelect').addEventListener('change', (e) => {
+      const vId = parseInt(e.target.value);
+      selectedVenueForBooking = venues.find(v => v.id === vId);
+      calculateBookingPrice();
+    });
+
+    // التفاعل مع تغيير طريقة الدفع
+    const paySelect = document.getElementById('paymentMethod');
+    paySelect.addEventListener('change', (e) => {
+      const method = e.target.value;
+      document.getElementById('walletNumberGroup').style.display = (method === 'wallet') ? 'block' : 'none';
+      document.getElementById('cardDetailsGroup').style.display = (method === 'card') ? 'block' : 'none';
+    });
+
+    // Admin Add Form
+    document.getElementById('addVenueForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const newV = {
+        id: Date.now(),
+        name: document.getElementById('admName').value,
+        lat: parseFloat(document.getElementById('admLat').value),
+        lng: parseFloat(document.getElementById('admLng').value),
+        price: parseFloat(document.getElementById('admPrice').value),
+        amenities: ["wifi", "quiet"],
+        points: 15,
+        img: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=500"
+      };
+      venues.push(newV);
+      updateState();
+      showToast("✅ تم إضافة المساحة بنجاح!");
+      e.target.reset();
+      navigateTo('venues-page');
+    });
+  }
+
+  // --- Booking Modal Handlers ---
+  function openBookingModal(venue = null) {
+    const venueSelectGroup = document.getElementById('venueSelectGroup');
+    const venueSelect = document.getElementById('bookVenueSelect');
+    
+    if (venue) {
+      selectedVenueForBooking = venue;
+      venueSelectGroup.style.display = 'none';
+      document.getElementById('bookModalTitle').textContent = `حجز في ${venue.name}`;
+    } else {
+      venueSelectGroup.style.display = 'block';
+      venueSelect.innerHTML = '';
+      venues.forEach(v => {
+        venueSelect.innerHTML += `<option value="${v.id}">${v.name} (${v.price} ج.م/ساعة)</option>`;
+      });
+      selectedVenueForBooking = venues[0];
+      document.getElementById('bookModalTitle').textContent = `حجز مساحة جديدة`;
+    }
+
+    document.getElementById('bookDate').value = new Date().toISOString().split('T')[0];
+    document.getElementById('paymentMethod').value = 'cash';
+    document.getElementById('walletNumberGroup').style.display = 'none';
+    document.getElementById('cardDetailsGroup').style.display = 'none';
+    
+    calculateBookingPrice();
+    document.getElementById('bookingModal').classList.add('active');
+  }
+
+  function closeBookingModal() {
+    document.getElementById('bookingModal').classList.remove('active');
+  }
+
+  function calculateBookingPrice() {
+    if(!selectedVenueForBooking) return;
+    const hours = parseInt(document.getElementById('bookHours').value) || 1;
+    const type = document.getElementById('bookType').value;
+    
+    let multiplier = 1;
+    if(type === 'private') multiplier = 1.5;
+    if(type === 'meeting') multiplier = 2.5;
+
+    const total = Math.round(selectedVenueForBooking.price * hours * multiplier);
+    document.getElementById('bookTotalPrice').textContent = `${total} ج.م`;
+  }
+
+  function handleBookingSubmit(e) {
+    e.preventDefault();
+    if(!selectedVenueForBooking) return;
+
+    const hours = parseInt(document.getElementById('bookHours').value) || 1;
+    const date = document.getElementById('bookDate').value;
+    const typeSelect = document.getElementById('bookType');
+    const seatType = typeSelect.options[typeSelect.selectedIndex].text.split(' ')[0];
+    const paySelect = document.getElementById('paymentMethod');
+    const payMethod = paySelect.value;
+    const payMethodText = paySelect.options[paySelect.selectedIndex].text.split(' ')[1];
+    
+    const total = parseInt(document.getElementById('bookTotalPrice').textContent);
+
+    // إذا اختار الدفع بالنقاط (كل 1 ج.م = 2 نقطة)
+    if (payMethod === 'points') {
+      const requiredPoints = total * 2;
+      if (userPoints < requiredPoints) {
+        showToast(`❌ رصيد النقاط غير كافٍ. تحتاج ${requiredPoints} نقطة.`);
+        return;
+      }
+      userPoints -= requiredPoints;
+    }
+
+    const code = 'WRK-' + Math.floor(1000 + Math.random() * 9000);
+
+    const newBooking = {
+      id: Date.now(),
+      venueName: selectedVenueForBooking.name,
+      date: date,
+      hours: hours,
+      seatType: seatType,
+      payMethod: payMethodText,
+      total: total,
+      status: "مؤكد",
+      pointsEarned: payMethod === 'points' ? 0 : (selectedVenueForBooking.points || 15),
+      code: code
+    };
+
+    bookings.unshift(newBooking);
+    if (payMethod !== 'points') {
+      userPoints += newBooking.pointsEarned;
+    }
+    
+    updateState();
+    closeBookingModal();
+    showToast(`✅ تم تأكيد حجزك بواسطة (${payMethodText})! كود: ${code}`);
+    navigateTo('bookings-page');
+  }
+
+  // Cancel Booking Action
+  function cancelBooking(bookingId) {
+    const booking = bookings.find(b => b.id === bookingId);
+    if(booking && booking.status === "مؤكد") {
+      booking.status = "ملغي";
+      if (userPoints >= booking.pointsEarned) {
+        userPoints -= booking.pointsEarned;
+      }
+      updateState();
+      showToast("❌ تم إلغاء الحجز بنجاح وتحديث رصيدك.");
+    }
+  }
+
+  // --- Render Functions ---
+  function updateState() {
+    document.getElementById('userPointsVal').textContent = userPoints;
+    document.getElementById('storePointsDisplay').textContent = userPoints;
+    renderVenues();
+    renderBookings();
+  }
+
+  function renderVenues(filter = "all") {
+    // Featured Home List
+    const featContainer = document.getElementById('featuredVenuesList');
+    featContainer.innerHTML = '';
+    venues.slice(0, 3).forEach(v => {
+      const item = document.createElement('div');
+      item.style.cssText = "display:flex; justify-content:space-between; align-items:center; padding:12px 14px; background:var(--chip-bg); border-radius:12px; cursor:pointer; border:1px solid var(--border); transition:0.2s;";
+      item.innerHTML = `
+        <div>
+          <strong style="font-size:0.9rem;">${v.name}</strong>
+          <div style="font-size:0.78rem; color:var(--text-muted); margin-top:2px;">${v.price} ج.م / ساعة</div>
+        </div>
+        <button class="btn btn-sm" style="padding:6px 12px;"><i class="fas fa-location-arrow"></i></button>
+      `;
+      item.addEventListener('click', () => focusVenueOnMap(v));
+      featContainer.appendChild(item);
+    });
+
+    // Full Venues Grid Page
+    const grid = document.getElementById('fullVenuesGrid');
+    grid.innerHTML = '';
+
+    let filtered = venues;
+    if(filter !== 'all') {
+      filtered = venues.filter(v => v.amenities.includes(filter));
+    }
+
+    filtered.forEach(v => {
+      const card = document.createElement('div');
+      card.className = 'venue-card';
+      card.innerHTML = `
+        <div class="venue-img" style="background-image: url('${v.img}');">
+          <span class="venue-status">${v.price} ج.م/ساعة</span>
+        </div>
+        <div class="venue-body">
+          <div>
+            <div class="venue-title">${v.name}</div>
+            <div class="venue-info"><i class="fas fa-star" style="color:var(--accent-orange);"></i> 4.8 (32 تقييم)</div>
+            <div class="venue-tags">
+              ${v.amenities.map(a => `<span class="tag">${a}</span>`).join('')}
+            </div>
+          </div>
+          <div style="display:flex; gap:8px; margin-top:12px;">
+            <button class="btn btn-sm book-btn" style="flex:1;"><i class="fas fa-calendar-plus"></i> حجز الآن</button>
+            <button class="btn btn-sm btn-outline nav-btn-item"><i class="fas fa-map-pin"></i></button>
+          </div>
+        </div>
+      `;
+
+      card.querySelector('.nav-btn-item').addEventListener('click', () => focusVenueOnMap(v));
+      card.querySelector('.book-btn').addEventListener('click', () => openBookingModal(v));
+
+      grid.appendChild(card);
+    });
+
+    updateMapMarkers();
+  }
+
+  // Render Bookings List
+  function renderBookings() {
+    const container = document.getElementById('userBookingsList');
+    container.innerHTML = '';
+
+    const activeList = bookings.filter(b => b.status === 'مؤكد');
+    const totalSpent = bookings.reduce((sum, b) => b.status === 'مؤكد' ? sum + b.total : sum, 0);
+
+    document.getElementById('statTotalBookings').textContent = bookings.length;
+    document.getElementById('statActiveBookings').textContent = activeList.length;
+    document.getElementById('statTotalSpent').textContent = `${totalSpent} ج.م`;
+
+    let displayList = bookings;
+    if (currentBookingFilter !== 'all') {
+      displayList = bookings.filter(b => b.status === currentBookingFilter);
+    }
+
+    if (displayList.length === 0) {
+      container.innerHTML = `
+        <div style="text-align:center; padding:40px; background:var(--chip-bg); border-radius:16px; border:1.5px dashed var(--border);">
+          <i class="fas fa-ticket-alt" style="font-size:2.5rem; color:var(--text-muted); margin-bottom:12px;"></i>
+          <p style="color:var(--text-muted); font-weight:500;">لا توجد حجوزات مطابقة في الوقت الحالي.</p>
+        </div>
+      `;
+      return;
+    }
+
+    displayList.forEach(b => {
+      const isConfirmed = b.status === "مؤكد";
+      const card = document.createElement('div');
+      card.className = `booking-card ${!isConfirmed ? 'cancelled' : ''}`;
+      
+      card.innerHTML = `
+        <div style="display:flex; gap:16px; align-items:center;">
+          <div style="width:48px; height:48px; border-radius:12px; background:${isConfirmed ? 'var(--chip-bg)' : 'var(--border)'}; color:${isConfirmed ? 'var(--primary)' : 'var(--text-muted)'}; display:flex; align-items:center; justify-content:center; font-size:1.3rem;">
+            <i class="fas ${isConfirmed ? 'fa-bookmark' : 'fa-ban'}"></i>
+          </div>
+          <div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <strong style="font-size:1rem; color:var(--text);">${b.venueName}</strong>
+              <span class="booking-badge ${isConfirmed ? 'confirmed' : 'cancelled'}">${b.status}</span>
+            </div>
+            <div style="font-size:0.82rem; color:var(--text-muted); margin-top:4px; display:flex; gap:14px; flex-wrap:wrap;">
+              <span><i class="far fa-calendar-alt"></i> ${b.date}</span>
+              <span><i class="far fa-clock"></i> ${b.hours} ساعات</span>
+              <span><i class="fas fa-chair"></i> ${b.seatType || 'مكتب'}</span>
+              <span><i class="fas fa-wallet"></i> ${b.payMethod || 'كاش'}</span>
+              <span><i class="fas fa-hashtag"></i> ${b.code || 'WRK-0000'}</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:14px;">
+          <div style="text-align:left;">
+            <div style="font-size:1.1rem; font-weight:700; color:var(--primary);">${b.total} ج.م</div>
+            ${isConfirmed && b.pointsEarned > 0 ? `<span style="font-size:0.75rem; color:var(--success);"><i class="fas fa-coins"></i> +${b.pointsEarned} نقطة</span>` : ''}
+          </div>
+          ${isConfirmed ? `<button class="btn btn-sm btn-danger cancel-btn"><i class="fas fa-times"></i> إلغاء الحجز</button>` : ''}
+        </div>
+      `;
+
+      if (isConfirmed) {
+        card.querySelector('.cancel-btn').addEventListener('click', () => {
+          if (confirm(`هل أنت تأكد من رغبتك في إلغاء الحجز الخاص بـ (${b.venueName})؟`)) {
+            cancelBooking(b.id);
+          }
+        });
+      }
+
+      container.appendChild(card);
+    });
+  }
+
+  // --- Leaflet Maps Initialization ---
+  function initMaps() {
+    homeMap = L.map('homeMap', { zoomControl: false }).setView([30.0444, 31.2357], 11);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '©️ OpenStreetMap'
+    }).addTo(homeMap);
+
+    updateMapMarkers();
+  }
+
+  function initFullMap() {
+    if (fullMap) return;
+    fullMap = L.map('fullMap').setView([30.0444, 31.2357], 11);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '©️ OpenStreetMap'
+    }).addTo(fullMap);
+
+    updateMapMarkers();
+  }
+
+  function updateMapMarkers() {
+    if (homeMap) {
+      Object.values(homeMarkers).forEach(m => homeMap.removeLayer(m));
+      homeMarkers = {};
+      venues.forEach(v => {
+        const marker = L.marker([v.lat, v.lng]).addTo(homeMap)
+          .bindPopup(`<b>${v.name}</b><br>${v.price} ج.م/ساعة`);
+        homeMarkers[v.id] = marker;
+      });
+    }
+
+    if (fullMap) {
+      Object.values(fullMarkers).forEach(m => fullMap.removeLayer(m));
+      fullMarkers = {};
+      venues.forEach(v => {
+        const marker = L.marker([v.lat, v.lng]).addTo(fullMap)
+          .bindPopup(`
+            <div style="text-align:right; font-family:'Readex Pro', sans-serif;">
+              <h4 style="margin-bottom:4px;">${v.name}</h4>
+              <p style="font-size:0.8rem; color:#64748b; margin-bottom:8px;">السعر: ${v.price} ج.م/ساعة</p>
+              <button onclick="window.triggerBookFromMap(${v.id})" style="background:#2563eb; color:white; border:none; padding:4px 10px; border-radius:12px; font-size:0.75rem; cursor:pointer;">احجز الآن</button>
+            </div>
+          `);
+        fullMarkers[v.id] = marker;
+      });
+    }
+  }
+
+  window.triggerBookFromMap = function(venueId) {
+    const v = venues.find(item => item.id === venueId);
+    if (v) openBookingModal(v);
+  };
+
+  document.querySelectorAll('#filterBar .chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('#filterBar .chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      renderVenues(chip.dataset.filter);
+    });
+  });
+
+  document.addEventListener('DOMContentLoaded', () => {
+    initTheme();
+    initNavigation();
+    initMaps();
+    updateState();
+  });
+
+})();
+</script>
+</body>
+</html>
